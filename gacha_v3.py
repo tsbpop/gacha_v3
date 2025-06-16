@@ -31,6 +31,7 @@ if uploaded_file:
         # 뽑기 설정
         st.subheader("🎰 뽑기 설정")
         draw_cost = st.number_input("11회 뽑기 비용 (원)", min_value=0, value=27500)
+        r_pity_once = st.checkbox("R등급 소환 천장 1회만 발동", value=False)    # R등급 소환 천장 지급 설정
         pity_S = st.number_input("S등급 천장 (회)", min_value=1, value=100)
         pity_R = st.number_input("R등급 천장 (회)", min_value=1, value=500)
 
@@ -78,9 +79,25 @@ if uploaded_file:
                             draw_count += 1
 
                             # 천장 우선
-                            if goal == "R" and draw_count == pity_R and not r_pity_triggered:
-                                grade = "R"
-                                r_pity_triggered = True  # 이후 천장 재발동 안 됨
+                            if goal == "R":
+                                if r_pity_once:
+                                    # 1회 한정 천장 발동 조건
+                                    if draw_count == pity_R and not r_pity_triggered:
+                                        grade = "R"
+                                        r_pity_triggered = True
+                                    else:
+                                        # 일반 확률
+                                        rand = random.uniform(0, 100)
+                                        idx = np.searchsorted(cum_probs, rand, side="right")
+                                        grade = grades_list[idx]
+                                else:
+                                    # 제한 없음: 기존처럼 N회마다 발동
+                                    if draw_count % pity_R == 0:
+                                        grade = "R"
+                                    else:
+                                        rand = random.uniform(0, 100)
+                                        idx = np.searchsorted(cum_probs, rand, side="right")
+                                        grade = grades_list[idx]
                             elif goal == "S" and draw_count % pity_S == 0:
                                 grade = "S"
                             else:
